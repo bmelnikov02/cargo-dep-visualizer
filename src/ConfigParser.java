@@ -43,7 +43,7 @@ public class ConfigParser {
                 throw new ConfigException("Неизвестный параметр: " + args[i]);
             }
         }
-        if (packageName == null) {
+        if (packageName == null || packageName.isBlank()) {
             throw new ConfigException("Название пакета не задано");
         }
         int depth = parseDepth(maxDepth);
