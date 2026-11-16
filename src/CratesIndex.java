@@ -34,7 +34,10 @@ public class CratesIndex {
      * Шаблон описания одной зависимости; группа 1 — имя пакета.
      */
     private static final Pattern DEPENDENCY = Pattern.compile("\\{\"name\":\"([^\"]+)\"[^{}]*\\}");
-
+    /**
+     * Шаблон настоящего имени переименованной зависимости; группа 1 — имя.
+     */
+    private static final Pattern PACKAGE = Pattern.compile("\"package\":\"([^\"]+)\"");
     /**
      * Вычисляет путь к файлу пакета в индексе crates.io.
      *
@@ -103,7 +106,8 @@ public class CratesIndex {
         Matcher matcher = DEPENDENCY.matcher(versionLine);
         while (matcher.find()) {
             String dep = matcher.group();
-            String name = matcher.group(1);
+            Matcher packageMatcher = PACKAGE.matcher(dep);
+            String name = packageMatcher.find() ? packageMatcher.group(1) : matcher.group(1);
             if (dep.contains("\"kind\":\"normal\"") && !result.contains(name)) {
                 result.add(name);
             }

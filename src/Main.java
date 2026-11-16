@@ -1,25 +1,27 @@
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Точка входа в приложение - инструмент визуализации графа зависимостей пакета Rust (cargo).
  */
 public class Main {
     /**
-     * Запускает приложение: разбирает параметры командной строки
-     * и выводит их значения. При ошибке в параметрах выводит
-     * сообщение об ошибке и завершает работу с кодом 1.
+     * Запускает приложение: разбирает параметры командной строки,
+     * строит граф зависимостей пакета и выводит его. При ошибке
+     * выводит сообщение и завершает работу с кодом 1.
      *
-     * @param args аргументы командной строки.
+     * @param args аргументы командной строки
      */
     public static void main(String[] args) {
         try {
             Config config = ConfigParser.parse(args);
-            if (config.testMode()) {
-                System.out.println("Тестовый режим будет реализован на этапе 3");
-                return;
-            }
-            printDependencies(config);
+            DependencySource source = createSource(config);
+            Map<String, List<String>> graph =
+                    GraphBuilder.build(source, config.packageName(), config.maxDepth());
+            System.out.println("Граф зависимостей " + config.packageName()
+                    + " (глубина " + config.maxDepth() + "):");
+            printGraph(graph);
         } catch (ConfigException e) {
             System.err.println("Error: " + e.getMessage());
             System.exit(1);
@@ -45,6 +47,29 @@ public class Main {
         }
         for (String dependency : dependencies) {
             System.out.println(dependency);
+        }
+    }
+    /**
+     * Создаёт источник зависимостей в соответствии с режимом работы.
+     *
+     * @param config параметры приложения
+     * @return тестовый источник в тестовом режиме, иначе источник crates.io
+     * @throws IOException если файл тестового репозитория не удалось загрузить
+     */
+    private static DependencySource createSource(Config config) throws IOException {
+        if (config.testMode()) {
+            return new TestSource(TestRepository.load(config.repo()));
+        }
+        return new CratesSource(config.repo());
+    }
+    /**
+     * Выводит граф зависимостей: по строке на каждый пакет.
+     *
+     * @param graph граф: пакет -> список его прямых зависимостей
+     */
+    private static void printGraph(Map<String, List<String>> graph) {
+        for (Map.Entry<String, List<String>> entry : graph.entrySet()) {
+            System.out.println(entry.getKey() + " -> " + String.join(", ", entry.getValue()));
         }
     }
 }

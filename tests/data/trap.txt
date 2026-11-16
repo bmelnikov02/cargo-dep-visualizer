@@ -1,0 +1,5 @@
+A: X B
+B: X
+X: Y
+Y: Z
+Z:
