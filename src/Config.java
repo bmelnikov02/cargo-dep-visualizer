@@ -6,6 +6,7 @@
  * @param maxDepth максимальная глубина анализа зависимостей.
  * @param testMode режим работы с тестовым репозиторием.
  * @param asciiTree режим вывода зависимостей в виде ASCII-дерева.
+ * @param reverse режим вывода обратных зависимостей
  */
 public record Config(
         String packageName,
@@ -13,6 +14,7 @@ public record Config(
         String output,
         int maxDepth,
         boolean testMode,
-        boolean asciiTree
+        boolean asciiTree,
+        boolean reverse
 ) {
 }

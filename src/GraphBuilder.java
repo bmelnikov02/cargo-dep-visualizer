@@ -51,4 +51,19 @@ public class GraphBuilder {
         }
         return graph;
     }
+
+    /**
+     * Строит обратный граф: для каждого пакета - список пакетов, которые от него зависят
+     * @param graph граф: пакет -> список его прямых зависимостей
+     * @return обратный граф: пакет -> список пакетов, зависящих от него
+     */
+    public static Map<String, List<String>> reverse(Map<String, List<String>> graph) {
+        Map<String, List<String>> reversed = new LinkedHashMap<>();
+        for (Map.Entry<String, List<String>> entry : graph.entrySet()) {
+            for (String dep : entry.getValue()) {
+                reversed.computeIfAbsent(dep, k -> new ArrayList<>()).add(entry.getKey());
+            }
+        }
+        return reversed;
+    }
 }

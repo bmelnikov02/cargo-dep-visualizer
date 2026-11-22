@@ -11,6 +11,7 @@ public class ConfigParser {
      * Разбирает аргументы командной строки, проверяет их
      * и возвращает готовую конфигурацию. Для незаданных
      * параметров используются значения по умолчанию.
+     *
      * @param args аргументы командной строки
      * @return проверенная конфигурация приложения
      * @throws ConfigException если параметр неизвестен, не имеет значения или задан неверно
@@ -22,6 +23,7 @@ public class ConfigParser {
         String maxDepth = "3";
         boolean testMode = false;
         boolean asciiTree = false;
+        boolean reverse = false;
         for (int i = 0; i < args.length; i++) {
             if (args[i].equals("--package")) {
                 packageName = getValue(args, i);
@@ -39,23 +41,25 @@ public class ConfigParser {
                 testMode = true;
             } else if (args[i].equals("--ascii-tree")) {
                 asciiTree = true;
+            } else if (args[i].equals("--reverse")) {
+                reverse = true;
             } else {
                 throw new ConfigException("Неизвестный параметр: " + args[i]);
             }
         }
-        if (packageName == null || packageName.isBlank()) {
-            throw new ConfigException("Название пакета не задано");
-        }
+        checkPackage(packageName);
         int depth = parseDepth(maxDepth);
         checkOutput(output);
         checkRepo(repo, testMode);
-        return new Config(packageName, repo, output, depth, testMode, asciiTree);
+        checkReverse(reverse, testMode);
+        return new Config(packageName, repo, output, depth, testMode, asciiTree, reverse);
     }
 
     /**
      * Возвращает значение опции - следующий за ней аргумент.
+     *
      * @param args аргументы командной строки
-     * @param i индекс опции в массиве аргументов
+     * @param i    индекс опции в массиве аргументов
      * @return значение опции
      * @throws ConfigException если значение отсутствует или начинается с "--"
      */
@@ -71,6 +75,7 @@ public class ConfigParser {
 
     /**
      * Преобразует глубину анализа в число и проверяет, что она не меньше минимально допустимой.
+     *
      * @param maxDepth глубина анализа в виде строки
      * @return глубина анализа в виде числа
      * @throws ConfigException если значение не целое число или меньше {@link #MIN_DEPTH}
@@ -90,6 +95,7 @@ public class ConfigParser {
 
     /**
      * Проверяет, что файл изображения имеет расширение .png.
+     *
      * @param output имя файла с изображением графа
      * @throws ConfigException если расширение не .png
      */
@@ -102,7 +108,8 @@ public class ConfigParser {
     /**
      * Проверяет репозиторий. В тестовом режиме это должен быть
      * существующий файл, иначе - адрес, начинающийся с http:// или https://.
-     * @param repo URL репозитория или путь к тестовому файлу
+     *
+     * @param repo     URL репозитория или путь к тестовому файлу
      * @param testMode включён ли режим тестового репозитория
      * @throws ConfigException если файл не найден или адрес некорректен
      */
@@ -115,6 +122,32 @@ public class ConfigParser {
             if (!(repo.startsWith("http://") || repo.startsWith("https://"))) {
                 throw new ConfigException("Адрес сайта задан неправильно: " + repo);
             }
+        }
+    }
+
+    /**
+     * Проверяет, что имя пакета задано и не пустое.
+     *
+     * @param packageName имя пакета
+     * @throws ConfigException если имя не задано или пустое
+     */
+    private static void checkPackage(String packageName) throws ConfigException {
+        if (packageName == null || packageName.isBlank()) {
+            throw new ConfigException("Название пакета не задано");
+        }
+    }
+
+    /**
+     * Проверяет, что режим обратных зависимостей используется
+     * только вместе с тестовым репозиторием.
+     *
+     * @param reverse  включён ли режим обратных зависимостей
+     * @param testMode включён ли режим тестового репозитория
+     * @throws ConfigException если обратные зависимости запрошены без тестового режима
+     */
+    private static void checkReverse(boolean reverse, boolean testMode) throws ConfigException {
+        if (reverse && !testMode) {
+            throw new ConfigException("Обратные зависимости выводятся только в тестовом режиме");
         }
     }
 }
