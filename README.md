@@ -11,7 +11,7 @@
 - [x] Этап 2. Сбор данных
 - [x] Этап 3. Основные операции
 - [x] Этап 4. Дополнительные операции
-- [ ] Этап 5. Визуализация
+- [x] Этап 5. Визуализация
 
 ## Параметры командной строки
 
@@ -36,6 +36,7 @@
 - глубина анализа не является целым числом (например, `--max-depth abc`)
 - глубина анализа меньше 1 (например, `--max-depth 0`)
 - имя выходного файла не имеет расширения `.png` (например, `--output graph.jpg`)
+- папка для выходного файла не существует
 - в обычном режиме адрес репозитория не начинается с `http://` или `https://`
 - в тестовом режиме (`--test-mode`) файл репозитория не существует
 - режим `--reverse` указан без `--test-mode`
@@ -43,6 +44,7 @@
 - пакет не найден в репозитории
 - произошла ошибка сети или сервер вернул ошибку
 - все версии пакета отозваны
+- Graphviz не установлен или завершился с ошибкой
 
 ## Получение зависимостей
 
@@ -85,6 +87,33 @@
 crates.io, зависящие от заданного, пришлось бы загрузить описания всех пакетов
 репозитория.
 
+## Визуализация
+
+- **Graphviz.** Граф описывается на языке DOT и сохраняется в файл `.dot`
+  рядом с изображением (для `--output graph.png` - `graph.dot`). Затем
+  программа вызывает Graphviz (`dot -Tpng`) и получает изображение PNG.
+- **ASCII-дерево.** С флагом `--ascii-tree` зависимости дополнительно
+  выводятся в консоль деревом. Пакет, который уже был показан выше,
+  повторно не раскрывается и помечается `(*)` - так же, как в `cargo tree`.
+  Это делает вывод компактным и защищает от зацикливания.
+
+Пример описания на языке DOT (`tests/data/simple.txt`):
+
+```dot
+digraph dependencies {
+    "A";
+    "A" -> "B";
+    "A" -> "C";
+    "B";
+    "B" -> "D";
+    "C";
+    "C" -> "D";
+    "C" -> "E";
+    "D";
+    "E";
+}
+```
+
 ## Тестовый репозиторий
 
 Формат файла: одна строка на пакет, имя пакета, двоеточие и его
@@ -110,6 +139,7 @@ D:
 ## Требования
 
 - JDK 17 или новее
+- Graphviz (команда `dot` должна быть доступна в PATH)
 - Доступ в интернет (для работы с crates.io)
 
 ## Сборка и запуск
@@ -121,18 +151,180 @@ run.bat --package serde      # cmd
 
 Скрипт компилирует исходники из `src` в папку `out` и запускает программу.
 
-## Примеры
+## Примеры визуализации
+
+### serde_json
+
+```
+> .\run.bat --package serde_json --max-depth 2 --ascii-tree --output docs/serde_json.png
+```
+
+![serde_json](docs/serde_json.png)
+
+```
+serde_json
+├── foldhash
+├── indexmap
+│   ├── arbitrary
+│   ├── borsh
+│   ├── equivalent
+│   ├── hashbrown
+│   ├── quickcheck
+│   ├── rayon
+│   ├── serde
+│   │   ├── serde_core
+│   │   │   └── serde_derive
+│   │   └── serde_derive (*)
+│   ├── serde_core (*)
+│   └── sval
+├── itoa
+│   └── no-panic
+├── memchr
+│   ├── rustc-std-workspace-core
+│   └── log
+├── serde (*)
+├── serde_core (*)
+└── zmij
+    └── no-panic (*)
+```
+
+### rand
+
+```
+> .\run.bat --package rand --max-depth 2 --ascii-tree --output docs/rand.png
+```
+
+![rand](docs/rand.png)
+
+```
+rand
+├── chacha20
+│   ├── cfg-if
+│   ├── cipher
+│   ├── cpufeatures
+│   ├── rand_core
+│   │   ├── serde
+│   │   │   ├── serde_core
+│   │   │   └── serde_derive
+│   │   └── serde_derive (*)
+│   └── zeroize
+├── getrandom
+│   ├── cfg-if (*)
+│   ├── js-sys
+│   ├── libc
+│   ├── r-efi
+│   ├── rand_core (*)
+│   └── wasm-bindgen
+├── rand_core (*)
+└── serde (*)
+```
+
+### clap
+
+```
+> .\run.bat --package clap --max-depth 2 --ascii-tree --output docs/clap.png
+```
+
+![clap](docs/clap.png)
+
+```
+clap
+├── clap_builder
+│   ├── anstream
+│   ├── anstyle
+│   ├── backtrace
+│   ├── clap_lex
+│   ├── strsim
+│   ├── terminal_size
+│   ├── unicase
+│   └── unicode-width
+└── clap_derive
+    ├── anstyle (*)
+    ├── heck
+    ├── proc-macro2
+    ├── pulldown-cmark
+    ├── quote
+    └── syn
+```
+
+## Сравнение с cargo tree
+
+Для сравнения использовалась штатная команда Cargo
+`cargo tree -p <пакет> --depth 2 -e normal` (Cargo 1.97, Linux) во временном
+проекте, в который добавлены пакеты `serde_json`, `rand` и `clap`:
+
+```
+serde_json v1.0.154
+├── itoa v1.0.19
+├── memchr v2.8.3
+├── serde_core v1.0.229
+└── zmij v1.0.23
+
+rand v0.10.4
+├── chacha20 v0.10.2
+│   ├── cfg-if v1.0.5
+│   ├── cpufeatures v0.3.1
+│   └── rand_core v0.10.1
+├── getrandom v0.4.3
+│   ├── cfg-if v1.0.5
+│   ├── libc v0.2.191
+│   └── rand_core v0.10.1
+└── rand_core v0.10.1
+
+clap v4.6.9
+└── clap_builder v4.6.7
+    ├── anstream v1.0.0
+    ├── anstyle v1.0.14
+    ├── clap_lex v1.1.2
+    └── strsim v0.11.1
+```
+
+**Что совпадает.** Все зависимости, которые показывает `cargo tree`, найдены
+и нашим инструментом.
+
+**Почему наш граф больше.** Расхождения объясняются следующими причинами:
+
+1. **Опциональные зависимости.** Часть зависимостей помечена в индексе как
+   `optional` и подключается только при включении определённой функции
+   пакета (feature). `cargo tree` показывает только зависимости, включённые
+   функциями по умолчанию, а наш инструмент - все зависимости вида `normal`.
+   Например, `clap_derive` у `clap` подключается только с функцией `derive`,
+   а `foldhash`, `indexmap` и `serde` у `serde_json` и `serde` у `rand` -
+   опциональные.
+2. **Зависимости для разных платформ.** `cargo tree` показывает зависимости
+   только для текущей платформы, а наш инструмент - для всех. Например,
+   у `getrandom` есть зависимости для WebAssembly (`js-sys`, `wasm-bindgen`)
+   и UEFI (`r-efi`), которые `cargo tree` на Linux не показывает. По этой
+   же причине вывод `cargo tree` на Windows будет отличаться от приведённого.
+3. **Выбор версий.** Cargo подбирает версию каждой зависимости по требованию
+   (например, `^1.0`) и может выбрать не самую новую. Наш инструмент для
+   каждого пакета берёт последнюю неотозванную версию, поэтому набор
+   зависимостей может немного отличаться.
+4. **Форма вывода.** `cargo tree` выводит версии и повторяет общую
+   зависимость в каждом месте её использования (например, `cfg-if` и
+   `rand_core` у `rand`). Наш инструмент показывает каждый пакет в графе
+   один раз, а в ASCII-дереве помечает повтор `(*)`.
+
+## Примеры работы с тестовым репозиторием
 
 Обычный граф:
 
 ```
-> .\run.bat --package A --test-mode --repo tests/data/simple.txt
+> .\run.bat --package A --test-mode --repo tests/data/simple.txt --ascii-tree
 Граф зависимостей A (глубина 3):
 A -> B, C
 C -> D, E
 E ->
 D ->
 B -> D
+ASCII-дерево:
+A
+├── B
+│   └── D
+└── C
+    ├── D (*)
+    └── E
+Изображение графа сохранено: graph.png
 ```
 
 Цикл - обход не зацикливается:
@@ -143,6 +335,7 @@ B -> D
 A -> B
 B -> C
 C -> A
+Изображение графа сохранено: graph.png
 ```
 
 Ограничение глубины:
@@ -152,6 +345,7 @@ C -> A
 Граф зависимостей A (глубина 2):
 A -> B
 B -> C
+Изображение графа сохранено: graph.png
 ```
 
 Короткий путь, найденный позже длинного:
@@ -163,21 +357,7 @@ A -> X, B
 B -> X
 X -> Y
 Y -> Z
-```
-
-Реальный пакет из crates.io:
-
-```
-> .\run.bat --package serde_json --max-depth 2
-Граф зависимостей serde_json (глубина 2):
-serde_json -> foldhash, indexmap, itoa, memchr, serde, serde_core, zmij
-zmij -> no-panic
-serde_core -> serde_derive
-serde -> serde_core, serde_derive
-memchr -> rustc-std-workspace-core, log
-itoa -> no-panic
-indexmap -> arbitrary, borsh, equivalent, hashbrown, quickcheck, rayon, serde, serde_core, sval
-foldhash ->
+Изображение графа сохранено: graph.png
 ```
 
 Обратные зависимости:
@@ -190,17 +370,7 @@ D -> B, C
 C -> A
 A ->
 B -> A
-```
-
-Обратные зависимости в цикле:
-
-```
-> .\run.bat --package A --test-mode --repo tests/data/cycle.txt --reverse
-Пакеты, зависящие от A: C, B
-Обратный граф (пакет -> кто от него зависит):
-A -> C
-C -> B
-B -> A
+Изображение графа сохранено: graph.png
 ```
 
 Обратные зависимости с ограничением глубины:
@@ -211,6 +381,7 @@ B -> A
 Обратный граф (пакет -> кто от него зависит):
 F -> E
 E -> D
+Изображение графа сохранено: graph.png
 ```
 
 Ошибки:
@@ -240,6 +411,8 @@ src/
   TestSource.java        источник зависимостей: тестовый репозиторий
   TestRepository.java    загрузка тестового репозитория из файла
   GraphBuilder.java      построение графа обходом DFS без рекурсии и разворот графа
+  GraphRenderer.java     визуализация: описание DOT, изображение PNG, ASCII-дерево
 tests/data/              тестовые репозитории
+docs/                    примеры визуализации (PNG и DOT)
 run.bat                  скрипт сборки и запуска
 ```

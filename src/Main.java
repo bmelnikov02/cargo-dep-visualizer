@@ -26,6 +26,12 @@ public class Main {
                         + " (глубина " + config.maxDepth() + "):");
                 printGraph(graph);
             }
+            if (config.asciiTree()) {
+                System.out.println("ASCII-дерево:");
+                GraphRenderer.printAsciiTree(graph, config.packageName());
+            }
+            GraphRenderer.savePng(GraphRenderer.toDot(graph), config.output());
+            System.out.println("Изображение графа сохранено: " + config.output());
         } catch (ConfigException e) {
             System.err.println("Error: " + e.getMessage());
             System.exit(1);

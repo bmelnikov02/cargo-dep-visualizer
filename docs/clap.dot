@@ -1,0 +1,21 @@
+digraph dependencies {
+    "clap";
+    "clap" -> "clap_builder";
+    "clap" -> "clap_derive";
+    "clap_derive";
+    "clap_derive" -> "anstyle";
+    "clap_derive" -> "heck";
+    "clap_derive" -> "proc-macro2";
+    "clap_derive" -> "pulldown-cmark";
+    "clap_derive" -> "quote";
+    "clap_derive" -> "syn";
+    "clap_builder";
+    "clap_builder" -> "anstream";
+    "clap_builder" -> "anstyle";
+    "clap_builder" -> "backtrace";
+    "clap_builder" -> "clap_lex";
+    "clap_builder" -> "strsim";
+    "clap_builder" -> "terminal_size";
+    "clap_builder" -> "unicase";
+    "clap_builder" -> "unicode-width";
+}

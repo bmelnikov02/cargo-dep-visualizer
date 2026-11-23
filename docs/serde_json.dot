@@ -1,0 +1,33 @@
+digraph dependencies {
+    "serde_json";
+    "serde_json" -> "foldhash";
+    "serde_json" -> "indexmap";
+    "serde_json" -> "itoa";
+    "serde_json" -> "memchr";
+    "serde_json" -> "serde";
+    "serde_json" -> "serde_core";
+    "serde_json" -> "zmij";
+    "zmij";
+    "zmij" -> "no-panic";
+    "serde_core";
+    "serde_core" -> "serde_derive";
+    "serde";
+    "serde" -> "serde_core";
+    "serde" -> "serde_derive";
+    "memchr";
+    "memchr" -> "rustc-std-workspace-core";
+    "memchr" -> "log";
+    "itoa";
+    "itoa" -> "no-panic";
+    "indexmap";
+    "indexmap" -> "arbitrary";
+    "indexmap" -> "borsh";
+    "indexmap" -> "equivalent";
+    "indexmap" -> "hashbrown";
+    "indexmap" -> "quickcheck";
+    "indexmap" -> "rayon";
+    "indexmap" -> "serde";
+    "indexmap" -> "serde_core";
+    "indexmap" -> "sval";
+    "foldhash";
+}

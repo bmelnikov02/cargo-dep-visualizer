@@ -1,0 +1,26 @@
+digraph dependencies {
+    "rand";
+    "rand" -> "chacha20";
+    "rand" -> "getrandom";
+    "rand" -> "rand_core";
+    "rand" -> "serde";
+    "serde";
+    "serde" -> "serde_core";
+    "serde" -> "serde_derive";
+    "rand_core";
+    "rand_core" -> "serde";
+    "rand_core" -> "serde_derive";
+    "getrandom";
+    "getrandom" -> "cfg-if";
+    "getrandom" -> "js-sys";
+    "getrandom" -> "libc";
+    "getrandom" -> "r-efi";
+    "getrandom" -> "rand_core";
+    "getrandom" -> "wasm-bindgen";
+    "chacha20";
+    "chacha20" -> "cfg-if";
+    "chacha20" -> "cipher";
+    "chacha20" -> "cpufeatures";
+    "chacha20" -> "rand_core";
+    "chacha20" -> "zeroize";
+}
